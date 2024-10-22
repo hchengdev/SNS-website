@@ -1,16 +1,12 @@
 package com.snsapi.notification;
 
-import com.snsapi.comment.Comment;
-import com.snsapi.comment.CommentService;
-import com.snsapi.post.Post;
-import com.snsapi.post.PostService;
-import com.snsapi.user.User;
-import com.snsapi.user.UserServices;
+import com.snsapi.user.UserDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/notifications")
@@ -18,73 +14,49 @@ import java.util.List;
 @RequiredArgsConstructor
 public class NotificationController {
     private final NotificationService notificationService;
-    private final UserServices userServices;
-    private final PostService postService;
-    private final CommentService commentService;
 
-    @GetMapping
-    public ResponseEntity<List<Notification>> getNotifications(@RequestParam("userId") Integer userId) {
-        User recipient = userServices.findById(userId);
-        List<Notification> notifications = notificationService.getNotificationsForUser(recipient);
-        return ResponseEntity.ok(notifications);
+    @GetMapping("/{userId}")
+    public ResponseEntity<List<NotificationDTO>> getNotifications(@PathVariable Integer userId) {
+        List<Notification> notifications = notificationService.getNotificationsForUser(userId);
+
+        // Chuyển đổi danh sách Notification thành danh sách NotificationDTO
+        List<NotificationDTO> notificationDTOs = notifications.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(notificationDTOs);
     }
 
-    @GetMapping("/mark-all-read")
-    public ResponseEntity<Void> getMarkAllRead(@RequestParam("userId") Integer userId) {
-        User recipient = userServices.findById(userId);
-        notificationService.markAllAsRead(recipient);
-        return ResponseEntity.ok().build();
+    @PutMapping("/{id}/read")
+    public ResponseEntity<Void> markAsRead(@PathVariable Integer id) {
+        // Xử lý trường hợp không tìm thấy thông báo
+        if (!notificationService.notificationExists(id)) {
+            return ResponseEntity.notFound().build(); // Trả về 404 Not Found
+        }
+
+        notificationService.markAsRead(id);
+        return ResponseEntity.ok().build(); // Trả về 200 OK
     }
 
-    @PostMapping("/like-post")
-    public ResponseEntity<Void> likePost(@RequestParam("senderId") Integer senderId,
-                                         @RequestParam("recipientId") Integer recipientId,
-                                         @RequestParam("postId") Integer postId) {
-        User sender = userServices.findById(senderId);
-        User recipient = userServices.findById(recipientId);
-        Post post = postService.findById(postId); // Giả sử bạn có PostService
-        notificationService.createLikePostNotification(sender, recipient, post);
-        return ResponseEntity.ok().build();
-    }
+    // Phương thức chuyển đổi từ Notification sang NotificationDTO
+    private NotificationDTO convertToDTO(Notification notification) {
+        UserDTO senderDTO = UserDTO.builder()
+                .id(notification.getSender().getId())
+                .name(notification.getSender().getName())
+                .profilePicture(notification.getSender().getProfilePicture())
+                .build();
 
-    @PostMapping("/like-comment")
-    public ResponseEntity<Void> likeComment(@RequestParam("senderId") Integer senderId,
-                                            @RequestParam("recipientId") Integer recipientId,
-                                            @RequestParam("commentId") Integer commentId) {
-        User sender = userServices.findById(senderId);
-        User recipient = userServices.findById(recipientId);
-        Comment comment = commentService.findById(commentId); // Giả sử bạn có CommentService
-        notificationService.createLikeCommentNotification(sender, recipient, comment);
-        return ResponseEntity.ok().build();
-    }
+        UserDTO recipientDTO = UserDTO.builder()
+                .id(notification.getRecipient().getId())
+                .name(notification.getRecipient().getName())
+                .profilePicture(notification.getRecipient().getProfilePicture())
+                .build();
 
-    @PostMapping("/comment-post")
-    public ResponseEntity<Void> commentPost(@RequestParam("senderId") Integer senderId,
-                                            @RequestParam("recipientId") Integer recipientId,
-                                            @RequestParam("postId") Integer postId) {
-        User sender = userServices.findById(senderId);
-        User recipient = userServices.findById(recipientId);
-        Post post = postService.findById(postId); // Giả sử bạn có PostService
-        notificationService.createCommentPostNotification(sender, recipient, post);
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("/reply-comment")
-    public ResponseEntity<Void> replyComment(@RequestParam("senderId") Integer senderId,
-                                             @RequestParam("recipientId") Integer recipientId,
-                                             @RequestParam("commentId") Integer commentId) {
-        User sender = userServices.findById(senderId);
-        User recipient = userServices.findById(recipientId);
-        Comment comment = commentService.findById(commentId); // Giả sử bạn có CommentService
-        notificationService.createReplyCommentNotification(sender, recipient, comment);
-        return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("/count")
-    public ResponseEntity<Integer> countNotifications(@RequestParam("userId") Integer userId) {
-        User recipient = userServices.findById(userId);
-        Integer count = notificationService.countUnreadNotificationsForUser(recipient);
-        return ResponseEntity.ok(count);
+        return NotificationDTO.builder()
+                .id(notification.getId())
+                .message(notification.getMessage())
+                .sender(senderDTO)
+                .recipient(recipientDTO)
+                .build();
     }
 }
-
