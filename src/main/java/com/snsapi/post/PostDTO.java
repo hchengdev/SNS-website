@@ -3,6 +3,7 @@ package com.snsapi.post;
 import com.snsapi.comment.CommentDTO;
 import com.snsapi.like.LikeDTO;
 import com.snsapi.media.MediaDTO;
+import com.snsapi.user.UserDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,4 +23,5 @@ public class PostDTO {
     private List<CommentDTO> comments;
     private String createdAt;
     private String updatedAt;
+    private UserDTO createdBy;
 }
