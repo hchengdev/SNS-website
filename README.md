@@ -1,4 +1,3 @@
-# sns-api
 ## Project Description
 
 A website that connects individuals to interact through the network.
@@ -12,3 +11,9 @@ A website that connects individuals to interact through the network.
 - **Post Function**: Users can create posts and interact with others through likes and comments.
   
 - **Message Function**: Users can send messages and chat with each other for direct interaction.
+
+### Repository Link:
+
+- [GitHub - sns-api](https://github.com/hchengdev/sns-api.git)
+- [GitHub - sns-fronetEnd](https://github.com/hchengdev/sns-frontend.git)
+  
