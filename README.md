@@ -14,6 +14,6 @@ A website that connects individuals to interact through the network.
 
 ### Repository Link:
 
-- [GitHub - sns-api](https://github.com/hchengdev/sns-api.git)
-- [GitHub - sns-fronetEnd](https://github.com/hchengdev/sns-frontend.git)
+- [GitHub - sns-api](https://github.com/hchengdev/sns-api.git)(Switch to the `dev` branch to view the code)
+- [GitHub - sns-fronetEnd](https://github.com/hchengdev/sns-frontend.git)(Switch to the `dev` branch to view the code)
   
