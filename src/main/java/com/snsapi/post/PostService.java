@@ -184,4 +184,9 @@ public class PostService {
         commentDTO.setLikes(likeDTO);
         return commentDTO;
     }
+
+    public Post findById(Integer postId) {
+        return postRepository.findById(postId)
+               .orElseThrow(() -> new EntityNotFoundException("Bài viết không tồn tại."));
+    }
 }

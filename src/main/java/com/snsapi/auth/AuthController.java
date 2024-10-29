@@ -70,7 +70,7 @@ public class AuthController {
             String jwt = jwtService.generateTokenLogin(authentication);
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-            return ResponseEntity.ok(new JwtResponse(currentUser.get().getId(), jwt, currentUser.get().getName(), userDetails.getUsername(), currentUser.get().getProfilePicture(), currentUser.get().getRoles().toString()));
+            return ResponseEntity.ok(new JwtResponse(currentUser.get().getId(), jwt,userDetails.getUsername(), currentUser.get().getName(), currentUser.get().getProfilePicture(), currentUser.get().getRoles().toString()));
         } catch (AuthenticationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Thông tin đăng nhập không chính xác");
         } catch (Exception e) {
