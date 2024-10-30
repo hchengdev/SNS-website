@@ -1,7 +1,6 @@
 package com.snsapi.chat;
 
 
-import com.snsapi.user.User;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -71,14 +70,15 @@ public class GroupChatController {
     }
 
     @DeleteMapping("/{groupId}/removeMember/{userId}")
-    public ResponseEntity<GroupChat> removeMember(@PathVariable Integer groupId, @PathVariable Integer userId) {
+    public ResponseEntity<?> removeMember(@PathVariable Integer groupId, @PathVariable Integer userId) {
         try {
             GroupChat updatedGroupChat = groupChatService.removeMember(groupId, userId);
             return ResponseEntity.ok(updatedGroupChat);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
 
 
 }

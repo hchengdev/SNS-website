@@ -1,21 +1,22 @@
 package com.snsapi.chat;
 
-import com.snsapi.user.FindUserResponse;
 import com.snsapi.user.User;
 import com.snsapi.user.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 public class GroupChatService {
-
+    @PersistenceContext
+    private EntityManager entityManager;
     private final GroupChatRepository groupChatRepository;
     private final GroupChatMessageRepository chatMessageRepository;
     private final UserRepository userRepository;
@@ -25,20 +26,11 @@ public class GroupChatService {
         this.chatMessageRepository = chatMessageRepository;
         this.userRepository = userRepository;
     }
-
     public GroupChat createGroup(String name) {
-        Optional<GroupChat> existingGroup = groupChatRepository.findByName(name);
-        if (existingGroup.isPresent()) {
-            GroupChat newGroupChat = new GroupChat();
-            newGroupChat.setName(name);
-            newGroupChat.setMembers(new HashSet<>());
-            return groupChatRepository.save(newGroupChat);
-        }
-
-        GroupChat groupChat = new GroupChat();
-        groupChat.setName(name);
-        groupChat.setMembers(new HashSet<>());
-        return groupChatRepository.save(groupChat);
+        GroupChat newGroupChat = new GroupChat();
+        newGroupChat.setName(name);
+        newGroupChat.setMembers(new HashSet<>());
+        return groupChatRepository.save(newGroupChat);
     }
 
 
@@ -86,6 +78,7 @@ public class GroupChatService {
                 .profilePicture(user.getProfilePicture())
                 .build();
     }
+
     public Set<UserGroupChatRes> getMembers(Integer groupId) {
         return groupChatRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Group not found"))
@@ -117,14 +110,12 @@ public class GroupChatService {
         GroupChat groupChat = groupChatRepository.findById(groupId)
                 .orElseThrow(() -> new IllegalArgumentException("GroupChat not found"));
 
-        Set<User> currentMembers = new HashSet<>(groupChat.getMembers());
-        if (currentMembers.contains(user)) {
-            currentMembers.remove(user);
-            groupChat.setMembers(currentMembers);
-        } else {
+        if (!groupChat.getMembers().contains(user)) {
             throw new IllegalArgumentException("User is not a member of this group.");
         }
 
+        groupChat.getMembers().remove(user);
+        entityManager.flush();
         return groupChatRepository.save(groupChat);
     }
 

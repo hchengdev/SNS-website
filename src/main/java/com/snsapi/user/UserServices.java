@@ -67,11 +67,13 @@ public class UserServices {
         userRepository.save(user);
     }
 
-    public User saveGG(String email) {
+    public User saveGG(String email,String picture,String name) {
         var user = User.builder()
                 .email(email)
                 .password(encodePassword("123456789"))
-                .name("clone username")
+                .name(name)
+                .profilePicture(picture)
+                .statusFriend(StatusFriend.PUBLIC)
                 .active(true)
                 .roles(new HashSet<>(Set.of(Role.ROLE_USER)))
                 .build();
