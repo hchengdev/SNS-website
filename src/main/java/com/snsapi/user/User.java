@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.snsapi.chat.ChatMessage;
 import com.snsapi.friend.AddFriend;
 import com.snsapi.post.Post;
 import jakarta.persistence.*;
@@ -89,6 +90,8 @@ public class User implements UserDetails {
     public boolean isFriend(User user) {
         return friends.stream().anyMatch(f -> f.getFriend().getId().equals(user.getId()));
     }
+    @OneToMany(mappedBy = "sender")
+    private Set<ChatMessage> sentMessages;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

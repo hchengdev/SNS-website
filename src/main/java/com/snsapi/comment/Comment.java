@@ -65,6 +65,6 @@ public class Comment {
     private List<Comment> replies = new ArrayList<>();
 
     @ManyToOne
-    @JoinColumn(name = "parent_id")
+    @JoinColumn(name = "parent_comment_id")
     private Comment parentComment;
 }

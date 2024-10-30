@@ -33,6 +33,12 @@ public class RestPostController {
     public ResponseEntity<List<PostDTO>> findAllPosts() {
         List<Post> posts = postService.getAllPosts();
 
+        if (posts.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        posts.sort((p1, p2) -> p2.getCreatedAt().compareTo(p1.getCreatedAt()));
+
         List<PostDTO> postDTOs = posts.stream()
                 .map(post -> {
                     PostDTO postDTO = new PostDTO();
@@ -42,6 +48,15 @@ public class RestPostController {
                     postDTO.setVisibility(post.getVisibility());
                     postDTO.setCreatedAt(DateConverter.localDateTimeToDateWithSlash(post.getCreatedAt()));
                     postDTO.setUpdatedAt(DateConverter.localDateTimeToDateWithSlash(post.getUpdatedAt()));
+
+                    if (post.getUser() != null) {
+                        UserDTO createdBy = new UserDTO(
+                                post.getUser().getId(),
+                                post.getUser().getName(),
+                                post.getUser().getProfilePicture()
+                        );
+                        postDTO.setCreatedBy(createdBy);
+                    }
 
                     List<MediaDTO> mediaDTOs = post.getMedia() != null ?
                             post.getMedia().stream()
@@ -81,7 +96,8 @@ public class RestPostController {
     public ResponseEntity<?> save(@RequestParam(value = "file", required = false) MultipartFile[] files,
                                   @RequestParam("content") String content,
                                   @RequestParam("userId") Integer userId,
-                                  @RequestParam("visibility") Post.VisibilityEnum visibility) {
+                                  @RequestParam("visibility") Post.VisibilityEnum visibility,
+                                  Principal principal) {
         if (files != null && files.length == 0) {
             return ResponseEntity.badRequest().body("File không hợp lệ.");
         }
@@ -91,8 +107,15 @@ public class RestPostController {
         }
 
         try {
-            Post savedPost = postService.save(userId, content, visibility, files);
+            Optional<User> userOptional = Optional.ofNullable(userServices.findById(userId));
 
+
+            if (userOptional.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("");
+            }
+
+            User user = userOptional.get();
+            Post savedPost = postService.save(user.getId(), content, visibility, files);
             PostDTO postDTO = new PostDTO();
             postDTO.setId(savedPost.getId());
             postDTO.setUserId(savedPost.getUser().getId());
@@ -107,9 +130,12 @@ public class RestPostController {
                 return mediaDTO;
             }).collect(Collectors.toList()));
 
+            UserDTO createdBy = new UserDTO(user.getId(), user.getName(), user.getProfilePicture());
+            postDTO.setCreatedBy(createdBy);
+
             int likeCount = savedPost.getLikeUsers().size();
             List<UserDTO> likeByUsers = savedPost.getLikeUsers().stream()
-                    .map(user -> new UserDTO(user.getId(), user.getName(), user.getProfilePicture()))
+                    .map(likeUser -> new UserDTO(likeUser.getId(), likeUser.getName(), likeUser.getProfilePicture()))
                     .collect(Collectors.toList());
 
             LikeDTO likeDTO = new LikeDTO(likeCount, likeByUsers);
@@ -126,9 +152,17 @@ public class RestPostController {
     public ResponseEntity<?> updatePost(@PathVariable("id") Integer postId,
                                         @RequestParam(value = "file", required = false) MultipartFile file,
                                         @RequestParam("content") String content,
-                                        @RequestParam(value = "visibility", required = false) Post.VisibilityEnum visibility) {
+                                        @RequestParam(value = "visibility", required = false) Post.VisibilityEnum visibility,
+                                        Principal principal) {
         if (content == null || content.trim().isEmpty()) {
             return ResponseEntity.badRequest().body("Nội dung không được để trống.");
+        }
+
+        String email = principal.getName();
+        Optional<User> userOpt = userServices.findByEmail(email);
+
+        if (!userOpt.isPresent()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Người dùng không hợp lệ.");
         }
 
         try {
@@ -149,9 +183,21 @@ public class RestPostController {
                     return mediaDTO;
                 }).collect(Collectors.toList()));
 
+                // Lấy thông tin người tạo
+                User createdByUser = updatedPost.getUser(); // Thay đổi nếu cần từ người tạo
+
+                if (createdByUser != null) {
+                    UserDTO createdBy = new UserDTO(
+                            createdByUser.getId(),
+                            createdByUser.getName(),
+                            createdByUser.getProfilePicture()
+                    );
+                    postDTO.setCreatedBy(createdBy);
+                }
+
                 int likeCount = updatedPost.getLikeUsers().size();
                 List<UserDTO> likeByUsers = updatedPost.getLikeUsers().stream()
-                        .map(user -> new UserDTO(user.getId(), user.getName(), user.getProfilePicture()))
+                        .map(likedUser -> new UserDTO(likedUser.getId(), likedUser.getName(), likedUser.getProfilePicture()))
                         .collect(Collectors.toList());
 
                 LikeDTO likeDTO = new LikeDTO(likeCount, likeByUsers);
