@@ -117,16 +117,14 @@ public class GroupChatService {
         GroupChat groupChat = groupChatRepository.findById(groupId)
                 .orElseThrow(() -> new IllegalArgumentException("GroupChat not found"));
 
-        Set<User> currentMembers = new HashSet<>(groupChat.getMembers());
-        if (currentMembers.contains(user)) {
-            currentMembers.remove(user);
-            groupChat.setMembers(currentMembers);
-        } else {
+        if (!groupChat.getMembers().contains(user)) {
             throw new IllegalArgumentException("User is not a member of this group.");
         }
 
+        groupChat.getMembers().remove(user);
         return groupChatRepository.save(groupChat);
     }
+
 
 
 }

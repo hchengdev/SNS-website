@@ -53,8 +53,8 @@ public class SecurityConfig {
         return http.csrf(AbstractHttpConfigurer::disable)
                 .addFilterBefore(jwtAuthenticationTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/login", "/api/v1/register", "/v1/auth/google", "/auth/google/callback", "/image/**").permitAll()
-                        .requestMatchers("/api/product", "/api/v1/**").authenticated()
+                        .requestMatchers("/api/v1/login", "/api/v1/register", "/v1/auth/**", "/auth/google/callback/**", "/image/**").permitAll()
+                        .requestMatchers("/api/v1/**").authenticated()
                 )
                 .build();
     }
